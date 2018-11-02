@@ -12,6 +12,7 @@ find_library( # Sets the name of the path variable.
               log )
 message(STATUS "CMAKE_SOURCE_DIR" ${CMAKE_SOURCE_DIR})
 set(distribution_dir ${CMAKE_SOURCE_DIR}/../distribution)
+set(arm_dir ${CMAKE_SOURCE_DIR}/../distribution)
 add_library( avcodec
              SHARED
              IMPORTED )
@@ -36,8 +37,7 @@ set_target_properties(swresample PROPERTIES IMPORTED_LOCATION ${distribution_dir
 add_library( swscale
              SHARED
              IMPORTED)
-set_target_properties( swscale
-                       PROPERTIES IMPORTED_LOCATION ${distribution_dir}/armeabi-v7a/libswscale.so )
+set_target_properties( swscale PROPERTIES IMPORTED_LOCATION ${distribution_dir}/armeabi-v7a/libswscale.so )
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
@@ -47,9 +47,9 @@ add_library( xp-ffmpeg
              src/main/cpp/xp-ffmpeg.cpp
               )
 
-include_directories(${distribution_dir}/include)
+#include_directories(${distribution_dir}/include)
 
-#target_include_directories(xp-ffmpeg PRIVATE libs/include)
+target_include_directories(xp-ffmpeg PRIVATE ${distribution_dir}/include)
 
 target_link_libraries( xp-ffmpeg avcodec avfilter avformat avutil swresample swscale ${log-lib} )
 
