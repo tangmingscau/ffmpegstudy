@@ -45,6 +45,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 add_library( xp-ffmpeg
              SHARED
              src/main/cpp/xp-ffmpeg.cpp
+             src/main/cpp/video.cpp
               )
 
 #include_directories(${distribution_dir}/include)
