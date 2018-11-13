@@ -1,5 +1,7 @@
 package com.xiaopeng.ffmpegstudy.model;
 
+import android.graphics.Bitmap;
+
 /**
  * @author tony
  * @date 2018/11/6
@@ -14,4 +16,10 @@ public class VideoModel {
     }
 
     public native String mp4ToH264(String path);
+
+    public native void playVideo(String videoPath, VideoCallback callback);
+
+    public interface VideoCallback {
+        public void callback(String result);
+    }
 }

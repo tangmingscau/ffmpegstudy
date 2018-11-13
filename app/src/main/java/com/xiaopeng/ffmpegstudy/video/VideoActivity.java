@@ -18,20 +18,22 @@ import permissions.dispatcher.RuntimePermissions;
  * @author tony
  * @date 2018/11/6
  */
-public class VideoActivity extends AppCompatActivity{
+public class VideoActivity extends AppCompatActivity {
     private static final String TAG = "VideoActivity";
     VideoModel mModel;
+    VideoView mVideoView;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video);
-        mModel=new VideoModel();
-        File file=new File("/sdcard/Music/normal.mp4");
-        Log.d(TAG,"file exit "+file.exists());
+        mModel = new VideoModel();
+        mVideoView =(VideoView) findViewById(R.id.player_view);
+        mVideoView.setModel(mModel);
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG,mModel.mp4ToH264("/sdcard/Music/normal.mp4"));
+              mVideoView.play();
             }
         }).start();
 
