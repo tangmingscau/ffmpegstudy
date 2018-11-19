@@ -20,6 +20,6 @@ public class VideoModel {
     public native void playVideo(String videoPath, VideoCallback callback);
 
     public interface VideoCallback {
-        public void callback(String result);
+        public void callback(byte[] result);
     }
 }

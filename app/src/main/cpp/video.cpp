@@ -5,6 +5,7 @@
 #include "video.h"
 #include <jni.h>
 #include <android/log.h>
+#include <iostream>
 
 #define TAG "tangmingjni"
 extern "C" {
@@ -12,6 +13,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavfilter/avfilter.h>
 #include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 JNIEXPORT jstring JNICALL
 Java_com_xiaopeng_ffmpegstudy_model_VideoModel_mp4ToH264(JNIEnv *env, jobject instance,
                                                          jstring path) {
@@ -91,13 +93,13 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "path = %s", fromPath);
     const char *filePath = env->GetStringUTFChars(videoPath_, NULL);
     AVFormatContext *pFormatCtx; //数据结构组装
-    AVFrame *pFrame;   //音频原始数据
+    AVFrame *pFrame, *pFrameRgba;   //音频原始数据
     int i, videoindex;
     AVCodecContext *pCodecCtx; //编解码
     AVCodec *pCodec; //
     AVPacket *packet; //压缩编码数据结构体
     uint8_t *out_buffer;
-
+    SwsContext *img_convert_Ctx;
     //尝试去实现jni回调
 
 
@@ -105,8 +107,8 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
     (*env).GetJavaVM(&g_Vm);
     jobject bitmapcallbak = (*env).NewGlobalRef(callback);
     jclass jBitmapClass = (*env).GetObjectClass(bitmapcallbak);
-    jmethodID jBitmapMethodId = (*env).GetMethodID(jBitmapClass, "callback", "(Ljava/lang/String;)V");
-    (*env).CallVoidMethod(callback, jBitmapMethodId,env->NewStringUTF("111"));
+    jmethodID jBitmapMethodId = (*env).GetMethodID(jBitmapClass, "callback", "([B)V");
+
 
     av_register_all(); //要使用ffmpeg就必须使用这句话
     avformat_network_init();//初始化网络
@@ -122,6 +124,7 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
         __android_log_print(ANDROID_LOG_ERROR, TAG, "can not find video info");
     }
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "find video info successful");
+
     videoindex = -1;
     for (i = 0; i < pFormatCtx->nb_streams; i++) {
         if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
@@ -132,25 +135,39 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
     if (videoindex == -1) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "can not find a video stream");
     }
+
     //发现解码器
     pCodec = avcodec_find_decoder(pFormatCtx->streams[videoindex]->codecpar->codec_id);
     //申请解码器上下文
     pCodecCtx = avcodec_alloc_context3(pCodec);
     avcodec_parameters_to_context(pCodecCtx, pFormatCtx->streams[videoindex]->codecpar);
-    avcodec_open2(pCodecCtx, pCodec, NULL);
+    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "could not open codec");
+    }
 
     //申请音频原始数据
     pFrame = av_frame_alloc();
     packet = (AVPacket *) av_malloc(sizeof(AVPacket));
+    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height,
+                                            1);
     out_buffer = (uint8_t *) av_malloc(
-            av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1));
-    av_dump_format(pFormatCtx, 0, filePath, 0); //打印相关的信息
+            av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1));
+    pFrameRgba = av_frame_alloc();
+    av_image_fill_arrays(pFrameRgba->data, pFrameRgba->linesize, out_buffer,
+                         AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
+   img_convert_Ctx=sws_getContext(pCodecCtx->width,pCodecCtx->height,pCodecCtx->pix_fmt,
+   pCodecCtx->width,pCodecCtx->height,AV_PIX_FMT_RGBA,SWS_BICUBIC,NULL,NULL,NULL);
 
     while (av_read_frame(pFormatCtx, packet) >= 0) {
         avcodec_send_packet(pCodecCtx, packet);
         avcodec_receive_frame(pCodecCtx, pFrame);
-
-        __android_log_print(ANDROID_LOG_DEBUG, TAG, "write file yuv");
+        sws_scale(img_convert_Ctx,(const uint8_t* const*)pFrame->data,pFrame->linesize,0,
+                  pCodecCtx->height,pFrameRgba->data,pFrameRgba->linesize);
+        jbyteArray data= env->NewByteArray(pFrameRgba->linesize[0]);
+        env->SetByteArrayRegion(data, 0, pFrameRgba->linesize[0],
+                                reinterpret_cast<const jbyte *>(pFrameRgba->data[0]));
+        (*env).CallVoidMethod(callback, jBitmapMethodId, data);
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "write file yuv %s",pFrameRgba->data[0]);
     }
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "close h264 success");
     av_packet_unref(packet);
@@ -158,11 +175,8 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "free success");
-
-    const char *videoPath = env->GetStringUTFChars(videoPath_, 0);
-
-    // TODO
-
-    env->ReleaseStringUTFChars(videoPath_, videoPath);
+    g_Vm->DetachCurrentThread();
+    env->DeleteGlobalRef(bitmapcallbak);
+    bitmapcallbak=NULL;
 }
 }

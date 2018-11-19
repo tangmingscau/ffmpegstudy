@@ -81,8 +81,8 @@ public class VideoView extends SurfaceView implements SurfaceHolder.Callback, Vi
     }
 
     @Override
-    public void callback(String result) {
-        Log.d(TAG, "callback =" +result);
+    public void callback(byte[] result) {
+        Log.d(TAG, "callback =" +new String(result));
 //       Canvas canvas= getHolder().lockCanvas();
 //        canvas.drawBitmap(bitmap,0,0,null);
 //        getHolder().unlockCanvasAndPost(canvas);
