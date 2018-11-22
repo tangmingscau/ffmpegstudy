@@ -99,13 +99,19 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
     AVCodec *pCodec; //
     AVPacket *packet; //压缩编码数据结构体
     uint8_t *out_buffer;
+    FILE *rgbfile = fopen("/sdcard/Music/normal.rgb", "wb+");
     SwsContext *img_convert_Ctx;
+    bool needDeteach = false;
     //尝试去实现jni回调
 
 
     JavaVM *g_Vm;
     (*env).GetJavaVM(&g_Vm);
     jobject bitmapcallbak = (*env).NewGlobalRef(callback);
+    if ((*g_Vm).GetEnv((void **) &env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        g_Vm->AttachCurrentThread(&env, NULL);
+        needDeteach = true;
+    }
     jclass jBitmapClass = (*env).GetObjectClass(bitmapcallbak);
     jmethodID jBitmapMethodId = (*env).GetMethodID(jBitmapClass, "callback", "([B)V");
 
@@ -151,32 +157,94 @@ Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo(JNIEnv *env, jobject in
     int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height,
                                             1);
     out_buffer = (uint8_t *) av_malloc(
-            av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1));
+            av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1));
     pFrameRgba = av_frame_alloc();
     av_image_fill_arrays(pFrameRgba->data, pFrameRgba->linesize, out_buffer,
-                         AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
-   img_convert_Ctx=sws_getContext(pCodecCtx->width,pCodecCtx->height,pCodecCtx->pix_fmt,
-   pCodecCtx->width,pCodecCtx->height,AV_PIX_FMT_RGBA,SWS_BICUBIC,NULL,NULL,NULL);
-
+                         AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
+    img_convert_Ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
+                                     pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_RGB24,
+                                     SWS_BICUBIC, NULL, NULL, NULL);
+    int bmpname = 0;
     while (av_read_frame(pFormatCtx, packet) >= 0) {
-        avcodec_send_packet(pCodecCtx, packet);
-        avcodec_receive_frame(pCodecCtx, pFrame);
-        sws_scale(img_convert_Ctx,(const uint8_t* const*)pFrame->data,pFrame->linesize,0,
-                  pCodecCtx->height,pFrameRgba->data,pFrameRgba->linesize);
-        jbyteArray data= env->NewByteArray(pFrameRgba->linesize[0]);
-        env->SetByteArrayRegion(data, 0, pFrameRgba->linesize[0],
-                                reinterpret_cast<const jbyte *>(pFrameRgba->data[0]));
-        (*env).CallVoidMethod(callback, jBitmapMethodId, data);
-        __android_log_print(ANDROID_LOG_DEBUG, TAG, "write file yuv %s",pFrameRgba->data[0]);
+        int ret = avcodec_send_packet(pCodecCtx, packet);
+//        __android_log_print(ANDROID_LOG_DEBUG, TAG, "send packet %d", ret);
+        if (ret >= 0) {
+            while (avcodec_receive_frame(pCodecCtx, pFrame) >= 0) {
+
+            }
+            sws_scale(img_convert_Ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize, 0,
+                      pCodecCtx->height, pFrameRgba->data, pFrameRgba->linesize);
+            jbyteArray data = env->NewByteArray(pFrameRgba->linesize[0]);
+            env->SetByteArrayRegion(data, 0, pFrameRgba->linesize[0],
+                                    reinterpret_cast<const jbyte *>(pFrameRgba->data[0]));
+            (*env).CallVoidMethod(callback, jBitmapMethodId, data);
+            char filename[40];
+            sprintf(filename, "/sdcard/Music/pngdir/%d.bmp", bmpname);
+
+            FILE *bmpFile = fopen(filename, "wb+");
+            for (i = 0; i < pFrameRgba->height; i++)
+                fwrite(pFrameRgba->data[0] + i * pFrameRgba->linesize[0], 1, pFrameRgba->width, bmpFile);
+//            fwrite(pFrameRgba->data[0], pCodecCtx->width * pCodecCtx->height * 3, 1, bmpFile);
+            bmpname++;
+        }
+//        fwrite(pFrameRgba->data[0],pCodecCtx->width*pCodecCtx->height*3,1,rgbfile);
+//        __android_log_print(ANDROID_LOG_DEBUG, TAG, "write file rgb %s", pFrameRgba->data[0]);
     }
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "close h264 success");
+    fclose(rgbfile);
     av_packet_unref(packet);
     av_frame_free(&pFrame);
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "free success");
-    g_Vm->DetachCurrentThread();
+    if (needDeteach) {
+        g_Vm->DetachCurrentThread();
+    }
     env->DeleteGlobalRef(bitmapcallbak);
-    bitmapcallbak=NULL;
+}
+JNIEXPORT void JNICALL
+Java_com_xiaopeng_ffmpegstudy_model_VideoModel_playVideo2(JNIEnv *env, jobject instance,
+                                                         jstring videoPath_, jobject callback) {
+    AVCodec *codec;
+    AVCodecParserContext *parser;
+    AVCodecContext *avCodecContext;
+    AVFrame *avFrame;
+    uint8_t inbuf[AV_INPUT_BUFFER_MIN_SIZE+AV_INPUT_BUFFER_PADDING_SIZE];
+    uint8_t *data;
+    size_t data_size;
+    AVPacket *avPacket;
+    bool needDeteach = false;
+    JavaVM *g_Vm;
+    (*env).GetJavaVM(&g_Vm);
+    jobject bitmapcallbak = (*env).NewGlobalRef(callback);
+    if ((*g_Vm).GetEnv((void **) &env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        g_Vm->AttachCurrentThread(&env, NULL);
+        needDeteach = true;
+    }
+    jclass jBitmapClass = (*env).GetObjectClass(bitmapcallbak);
+    jmethodID jBitmapMethodId = (*env).GetMethodID(jBitmapClass, "callback", "([B)V");
+    avPacket=av_packet_alloc();
+    memset(inbuf+AV_INPUT_BUFFER_MIN_SIZE,0,AV_INPUT_BUFFER_PADDING_SIZE);
+    codec=avcodec_find_decoder(AV_CODEC_ID_MPEG2VIDEO);
+    if (!codec){
+
+    }
+
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "free success");
+    if (needDeteach) {
+        g_Vm->DetachCurrentThread();
+    }
+    env->DeleteGlobalRef(bitmapcallbak);
+}
+ void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
+                     char *filename)
+{
+    FILE *f;
+    int i;
+    f = fopen(filename,"w");
+    fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
+    for (i = 0; i < ysize; i++)
+        fwrite(buf + i * wrap, 1, xsize, f);
+    fclose(f);
 }
 }

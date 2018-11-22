@@ -19,4 +19,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="视频界面"/>
+    <Button
+        android:id="@+id/btn_android_audio"
+        android:layout_width="match_parent"
+        android:text="android原生mediaplayer"
+        android:layout_height="wrap_content"/>
 </LinearLayout>

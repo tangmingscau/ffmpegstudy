@@ -11,6 +11,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.xiaopeng.ffmpegstudy.model.VideoModel;
+import com.xiaopeng.ffmpegstudy.util.BitmapUtil;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -77,15 +78,20 @@ public class VideoView extends SurfaceView implements SurfaceHolder.Callback, Vi
     }
 
     public void play() {
-        mVideoModel.playVideo("/sdcard/Music/normal.mp4", this);
+        mVideoModel.playVideo2("/sdcard/Music/normal.mp4", this);
     }
 
     @Override
     public void callback(byte[] result) {
-        Log.d(TAG, "callback =" +new String(result));
-//       Canvas canvas= getHolder().lockCanvas();
-//        canvas.drawBitmap(bitmap,0,0,null);
-//        getHolder().unlockCanvasAndPost(canvas);
+        Log.d(TAG, "callback =" + new String(result));
+        Bitmap bitmap = BitmapUtil.getBitmap(result);
+        if (bitmap == null) {
+            return;
+        }
+        Log.d(TAG, "callback bitmap=" + bitmap);
+        Canvas canvas = getHolder().lockCanvas();
+        canvas.drawBitmap(bitmap, 0, 0, null);
+        getHolder().unlockCanvasAndPost(canvas);
     }
 
 }
