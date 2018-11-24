@@ -52,5 +52,15 @@ add_library( xp-ffmpeg
 
 target_include_directories(xp-ffmpeg PRIVATE ${distribution_dir}/include)
 
-target_link_libraries( xp-ffmpeg avcodec avfilter avformat avutil swresample swscale ${log-lib} )
+target_link_libraries( xp-ffmpeg
+                       -landroid #native_window
+                       -ljnigraphics #bitmap
+                       -lOpenSLES #openSLES
+                        avcodec
+                        avfilter
+                        avformat
+                        avutil
+                        swresample
+                        swscale
+                        ${log-lib} )
 

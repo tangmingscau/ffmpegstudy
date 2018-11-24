@@ -53,14 +53,19 @@ public class VideoView extends SurfaceView implements SurfaceHolder.Callback, Vi
     }
 
     private void initVideoView() {
-        getHolder().setFormat(PixelFormat.RGB_888);
         getHolder().addCallback(this);
         mPlayState = STATE_IDLE;
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-
+        Log.d(TAG, "surfaceCreated");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                play();
+            }
+        }).start();
     }
 
     @Override
@@ -78,7 +83,7 @@ public class VideoView extends SurfaceView implements SurfaceHolder.Callback, Vi
     }
 
     public void play() {
-        mVideoModel.playVideo2("/sdcard/Music/normal.mp4", this);
+        mVideoModel.playVideo3("/sdcard/Music/normal.mp4", this, getHolder().getSurface());
     }
 
     @Override
@@ -89,9 +94,9 @@ public class VideoView extends SurfaceView implements SurfaceHolder.Callback, Vi
             return;
         }
         Log.d(TAG, "callback bitmap=" + bitmap);
-        Canvas canvas = getHolder().lockCanvas();
-        canvas.drawBitmap(bitmap, 0, 0, null);
-        getHolder().unlockCanvasAndPost(canvas);
+//        Canvas canvas = getHolder().lockCanvas();
+//        canvas.drawBitmap(bitmap, 0, 0, null);
+//        getHolder().unlockCanvasAndPost(canvas);
     }
 
 }

@@ -2,6 +2,7 @@ package com.xiaopeng.ffmpegstudy.video;
 
 import android.Manifest;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -30,13 +31,6 @@ public class VideoActivity extends AppCompatActivity {
         mModel = new VideoModel();
         mVideoView =(VideoView) findViewById(R.id.player_view);
         mVideoView.setModel(mModel);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-              mVideoView.play();
-            }
-        }).start();
-
 
     }
 }
