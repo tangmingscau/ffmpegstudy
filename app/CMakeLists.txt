@@ -46,6 +46,7 @@ add_library( xp-ffmpeg
              SHARED
              src/main/cpp/xp-ffmpeg.cpp
              src/main/cpp/video.cpp
+             src/main/cpp/audio.cpp
               )
 
 #include_directories(${distribution_dir}/include)

@@ -44,7 +44,8 @@ public class FfmpegActivity extends AppCompatActivity implements View.OnClickLis
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_audio:
-                startActivity(new Intent(FfmpegActivity.this, AudioMainActivity.class));
+                FfmpegActivityPermissionsDispatcher.showAudioWithPermissionCheck(this);
+
                 break;
             case R.id.btn_video:
                 FfmpegActivityPermissionsDispatcher.showVideoWithPermissionCheck(this);
@@ -67,6 +68,9 @@ public class FfmpegActivity extends AppCompatActivity implements View.OnClickLis
     void showVideo() {
         startActivity(new Intent(FfmpegActivity.this, VideoActivity.class));
     }
-
+    @NeedsPermission({Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE})
+    void showAudio(){
+        startActivity(new Intent(FfmpegActivity.this, AudioMainActivity.class));
+    }
 
 }

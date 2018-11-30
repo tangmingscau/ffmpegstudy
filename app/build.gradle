@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-
+apply plugin: 'com.jakewharton.butterknife'
 android {
     compileSdkVersion 27
     buildToolsVersion "27.0.3"
@@ -10,12 +10,12 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        externalNativeBuild{
-            cmake{
+        externalNativeBuild {
+            cmake {
                 cppFlags ""
             }
         }
-        ndk{
+        ndk {
             abiFilters "armeabi-v7a"
         }
     }
@@ -32,8 +32,8 @@ android {
         }
     }
 
-    externalNativeBuild{
-        cmake{
+    externalNativeBuild {
+        cmake {
             path "CMakeLists.txt"
         }
     }
@@ -50,6 +50,10 @@ dependencies {
     implementation "com.github.hotchemi:permissionsdispatcher:3.2.0"
     implementation 'com.github.ksoichiro:android-observablescrollview:1.6.0'
     annotationProcessor "com.github.hotchemi:permissionsdispatcher-processor:3.2.0"
+    implementation 'com.jakewharton:butterknife:8.6.0' ,{
+        exclude group: 'com.android.support'
+    }
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.6.0'
     testImplementation 'junit:junit:4.12'
 }
 

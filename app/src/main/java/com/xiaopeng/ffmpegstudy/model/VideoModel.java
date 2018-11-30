@@ -18,9 +18,7 @@ public class VideoModel {
 
     public native String mp4ToH264(String path);
 
-    public native void playVideo(String videoPath, VideoCallback callback);
     public native void playVideo3(String videoPath, VideoCallback callback, Object surface);
-    public native void playVideo2(String videoPath, VideoCallback callback);
     public interface VideoCallback {
         public void callback(byte[] result);
     }
