@@ -34,6 +34,6 @@ public class AudioMainActivity extends Activity  {
     }
     @OnClick(R.id.btn_play)
     public void play(){
-        mPlayer.play("/sdcard/Music/audio/audio.mp3");
+        mPlayer.play("/sdcard/Music/audio/anjing.ape");
     }
 }

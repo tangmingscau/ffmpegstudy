@@ -108,6 +108,7 @@ Java_com_xiaopeng_ffmpegstudy_audio_AudioPlayer_decodeAudio(JNIEnv *env, jobject
 JNIEXPORT jint JNICALL
 Java_com_xiaopeng_ffmpegstudy_audio_AudioPlayer_playAudio(JNIEnv *env, jobject instance,
                                                           jstring path_, jobject callback) {
+   av_log_set_level(AV_LOG_TRACE);
     const char *path = env->GetStringUTFChars(path_, 0);
     bool needDeteach = false;
     JavaVM *g_Vm;
@@ -177,7 +178,6 @@ Java_com_xiaopeng_ffmpegstudy_audio_AudioPlayer_playAudio(JNIEnv *env, jobject i
     int out_channel_nb = av_get_channel_layout_nb_channels(out_ch_layout);
     (*env).CallVoidMethod(audioCallback, audioPlaybackMethodID, out_sample_rate,
                           out_channel_nb, 2);
-
 
     while (av_read_frame(avFormatContext, avPacket) >= 0) {
         //解码类型是音频
