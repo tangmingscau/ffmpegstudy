@@ -1,10 +1,9 @@
-package com.xiaopeng.suanfa;
+package com.xiaopeng.suanfa.sort;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 
 /**
- * 快速排序
+ * 快速排序,一次排序过后，key左边数据比key小，key右边数据比key大
  */
 public class QuickSort {
     private static int count = 0;
@@ -12,18 +11,18 @@ public class QuickSort {
     public static void main(String[] args) {
         int[] array = {1, 3, 2, 9, 8, 100, 5, 200, 19, 2};
         int[] array2 = {1, 2, 3, 4, 5, 6, 7, 8, 10, 9};
-        int[] array3 = {1, 2, 5, 7, 4, 3, 6, 8, 9, 10};
-        System.out.print("经典快排\n");
+        int[] array3 = DataProvider.generateRandomArray(1000,0,1000);
+        System.out.println("经典快排\n");
         int[] result = QuickSort(array3.clone(), 0, 9);
-        System.out.print("count=" + count + " " + Arrays.toString(result) + "\n");
-        System.out.print("经典快排+三分法\n");
+        System.out.println("count=" + count + " " + Arrays.toString(result) + "\n");
+        System.out.println("经典快排+三分法\n");
         count = 0;
         result = threePartQuickSort(array3.clone(), 0, 9);
-        System.out.print("count=" + count + " " + Arrays.toString(result));
-        System.out.print("经典快排+三分法+减少递归层次\n");
+        System.out.println("count=" + count + " " + Arrays.toString(result));
+        System.out.println("经典快排+三分法+减少递归层次\n");
         count = 0;
         result = threePartQuickSort(array3.clone(), 0, 9);
-        System.out.print("count=" + count + " " + Arrays.toString(result));
+        System.out.println("count=" + count + " " + Arrays.toString(result));
 
     }
 

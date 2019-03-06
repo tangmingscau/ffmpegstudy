@@ -1,4 +1,4 @@
-package com.xiaopeng.suanfa;
+package com.xiaopeng.suanfa.sort;
 
 /**
  * @author tony
