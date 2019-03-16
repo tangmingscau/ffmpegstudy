@@ -99,14 +99,13 @@ public class InsertSort {
         for (int d = toSorts.length / 2; d >= 1; d = d / 2) {
             for (int i = d; i < toSorts.length; i++) {
                 //i是即将要插入的数据，也是一个系列的最后一个数据
-                for (int j = i - d; j >= 0; j -= d) {
-                    if (toSorts[j + d] < toSorts[j]) {
-                        int temp = toSorts[j + d];
-                        toSorts[j + d] = toSorts[j];
-                        toSorts[j] = temp;
-                    }
-                    count++;
+                int temp = toSorts[i];
+                int j = i - d;
+                while (j >= 0 && temp < toSorts[j]) {
+                    toSorts[j + d] = toSorts[j];
+                    j -= d;
                 }
+                toSorts[j + d] = temp;
             }
         }
         System.out.println("count=" + count + " " + Arrays.toString(toSorts));

@@ -32,7 +32,7 @@ public class OrderFind {
     }
 
     /**
-     * 二分查找，时间复杂度是O(n)
+     * 二分查找，时间复杂度是O(logn)
      *
      * @param toFinds 已经排好序的列表
      * @param target

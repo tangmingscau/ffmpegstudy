@@ -36,7 +36,7 @@ public class MaoPaoSort {
         for (int i = 0; i < toSorts.length - 1; i++) {
             for (int j = 0; j < toSorts.length - 1 - i; j++) {
                 if (toSorts[j] > toSorts[j + 1]) {
-                    //发现有更小的数据，挪到排序开始头部
+                    //发现有更大的数据，挪到排序开始尾部
                     int temp = toSorts[j + 1];
                     toSorts[j + 1] = toSorts[j];
                     toSorts[j] = temp;
